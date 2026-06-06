@@ -32,6 +32,20 @@ API 서버 코드는 클라이언트와 분리해서 운영하는 것을 권장�
 
 ## Build
 
+## Download
+
+Windows executable:
+
+```text
+https://github.com/MovieHolic-Plex/nomad-timer/releases/download/v0.1.0/breaktime.exe
+```
+
+SHA-256:
+
+```text
+614e25c75c875f7f4be6b5b8da22fefe71a5e205154202cc5974b440b25db7d8
+```
+
 Windows 앱:
 
 ```powershell

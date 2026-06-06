@@ -1,7 +1,7 @@
 export const download = {
   filename: "breaktime.exe",
-  href: "/downloads/breaktime.exe",
-  sha256: "ed1f326e323f660a0f8fab51ce1ffd5dbe6d6640851246e683f706e94d4ce8f4"
+  href: "https://github.com/MovieHolic-Plex/nomad-timer/releases/download/v0.1.0/breaktime.exe",
+  sha256: "614e25c75c875f7f4be6b5b8da22fefe71a5e205154202cc5974b440b25db7d8"
 } as const;
 
 export const apiBaseUrl = "https://nomad-timer.hyeon.space/api" as const;

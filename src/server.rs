@@ -8,6 +8,9 @@ use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const MAX_MESSAGES: usize = 20;
+const MAX_BODY_BYTES: usize = 512;
+const MAX_REQUEST_BYTES: usize = 2048;
+const MAX_SENDER_BYTES: usize = 32;
 const HOUR_MS: u64 = 60 * 60 * 1000;
 const READ_CHUNK_BYTES: usize = 4096;
 
@@ -26,7 +29,7 @@ pub struct ErrorResponse {
 #[derive(Debug, Eq, PartialEq)]
 pub enum BroadcastError {
     UnknownPreset,
-    EmptySender,
+    InvalidSender,
 }
 
 #[derive(Default)]
@@ -42,8 +45,8 @@ impl BroadcastStore {
         sent_at_ms: u64,
     ) -> Result<BroadcastMessage, BroadcastError> {
         let clean_sender = sender.trim();
-        if clean_sender.is_empty() {
-            return Err(BroadcastError::EmptySender);
+        if !is_safe_sender(clean_sender) {
+            return Err(BroadcastError::InvalidSender);
         }
         let preset = find_preset(preset_id).ok_or(BroadcastError::UnknownPreset)?;
         let message = message_from_preset(preset, clean_sender, sent_at_ms);
@@ -147,7 +150,7 @@ fn handle_stream(
             match result {
                 Ok(message) => write_json(stream, 201, &message),
                 Err(BroadcastError::UnknownPreset) => write_error(stream, "unknownPreset"),
-                Err(BroadcastError::EmptySender) => write_error(stream, "emptySender"),
+                Err(BroadcastError::InvalidSender) => write_error(stream, "invalidSender"),
             }
         }
         _ => write_json(
@@ -188,7 +191,19 @@ fn read_http_request(reader: &mut impl Read) -> std::io::Result<HttpRequest> {
             break;
         }
         bytes.extend_from_slice(&buffer[..read]);
+        if bytes.len() > MAX_REQUEST_BYTES {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "request is too large",
+            ));
+        }
         if let Some((head_len, content_len)) = request_lengths(&bytes) {
+            if content_len > MAX_BODY_BYTES || head_len + content_len > MAX_REQUEST_BYTES {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "request body is too large",
+                ));
+            }
             expected_len = Some(head_len + content_len);
         }
         if let Some(total_len) = expected_len
@@ -218,10 +233,24 @@ fn request_lengths(bytes: &[u8]) -> Option<(usize, usize)> {
     let head = String::from_utf8_lossy(&bytes[..head_end]);
     let content_len = head
         .lines()
-        .find_map(|line| line.strip_prefix("Content-Length: "))
-        .and_then(|value| value.trim().parse::<usize>().ok())
+        .filter_map(|line| line.split_once(':'))
+        .find_map(|(name, value)| {
+            if name.eq_ignore_ascii_case("content-length") {
+                value.trim().parse::<usize>().ok()
+            } else {
+                None
+            }
+        })
         .unwrap_or(0);
     Some((head_end, content_len))
+}
+
+fn is_safe_sender(sender: &str) -> bool {
+    !sender.is_empty()
+        && sender.len() <= MAX_SENDER_BYTES
+        && sender
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
 }
 
 fn write_json<T: Serialize>(stream: &mut TcpStream, status: u16, body: &T) -> std::io::Result<()> {
@@ -309,6 +338,31 @@ mod tests {
             parsed.body,
             "{\"presetId\":\"rest-start\",\"sender\":\"qa-user\"}"
         );
+    }
+
+    #[test]
+    fn http_reader_rejects_oversized_broadcast_body() {
+        // Given: a request declares a body larger than the broadcast endpoint accepts.
+        let request = b"POST /broadcast HTTP/1.1\r\nContent-Length: 513\r\n\r\n{}";
+        let mut reader = ChunkedReader::new(request, 128);
+
+        // When: the request is read.
+        let parsed = read_http_request(&mut reader);
+
+        // Then: the server refuses the oversized request before parsing JSON.
+        assert!(parsed.is_err(), "oversized requests must be rejected");
+    }
+
+    #[test]
+    fn preset_broadcast_rejects_untrusted_sender_names() {
+        // Given: a fresh store accepts only compact client identifiers.
+        let mut store = BroadcastStore::default();
+
+        // When: a sender tries to submit display text instead of an identifier.
+        let rejected = store.post_preset("water", "very long sender name with spaces", 1);
+
+        // Then: the server rejects it instead of reflecting arbitrary sender text.
+        assert!(rejected.is_err(), "sender names must be bounded identifiers");
     }
 
     #[test]

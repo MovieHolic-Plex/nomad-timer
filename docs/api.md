@@ -40,6 +40,7 @@ Returns recent preset broadcasts, newest first.
 ## POST /broadcast
 
 Only prepared preset IDs are accepted.
+Production should rate-limit this endpoint because it intentionally accepts unauthenticated preset reactions.
 
 ```json
 {

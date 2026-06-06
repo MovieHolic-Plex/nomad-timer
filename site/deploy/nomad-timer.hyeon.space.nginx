@@ -26,6 +26,19 @@ server {
     root /ml/nomad-timer/dist;
     index index.html;
 
+    location = /api/broadcast {
+        limit_req zone=nomad_timer_broadcast burst=6 nodelay;
+        limit_req_status 429;
+        client_max_body_size 1k;
+
+        proxy_pass http://127.0.0.1:7878/broadcast;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     location /api/ {
         proxy_pass http://127.0.0.1:7878/;
         proxy_http_version 1.1;

@@ -1,0 +1,39 @@
+[package]
+name = "breaktime"
+version = "0.1.0"
+edition = "2024"
+autobins = false
+
+[features]
+default = []
+api-server = []
+
+[[bin]]
+name = "breaktime"
+path = "src/main.rs"
+
+[[bin]]
+name = "breaktime-server"
+path = "src/bin/breaktime-server.rs"
+required-features = ["api-server"]
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "3", features = ["json"] }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

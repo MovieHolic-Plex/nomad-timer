@@ -1,0 +1,15 @@
+/.omo/
+/target/
+
+site/node_modules/
+site/dist/
+site/.vite/
+
+*.exe
+*.pdb
+*.log
+*.tgz
+
+.env
+.env.*
+!.env.example

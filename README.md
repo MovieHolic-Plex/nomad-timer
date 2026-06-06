@@ -1,13 +1,38 @@
 # Nomad Timer
 
-작은 Windows 네이티브 휴식 위젯입니다.
+작은 Windows 네이티브 휴식 위젯입니다. Electron 없이 Rust + Win32 API로 만들었습니다.
 
 정시 기준으로 50분은 일하는 시간, 10분은 쉬는시간으로 맞추고, 모든 클라이언트는 같은 API 서버를 기준으로 같은 리듬을 봅니다.
+
+## Links
+
+- Website: [nomad-timer.hyeon.space](https://nomad-timer.hyeon.space)
+- Download: [breaktime.exe v0.1.0](https://github.com/MovieHolic-Plex/nomad-timer/releases/download/v0.1.0/breaktime.exe)
+- API: [nomad-timer.hyeon.space/api](https://nomad-timer.hyeon.space/api/schedule)
+
+## Screenshots
+
+![Nomad Timer landing page](docs/screenshots/site-home.png)
+
+![Nomad Timer mobile landing page](docs/screenshots/site-mobile.png)
+
+## Download
+
+Windows executable:
+
+```text
+https://github.com/MovieHolic-Plex/nomad-timer/releases/download/v0.1.0/breaktime.exe
+```
+
+SHA-256:
+
+```text
+614e25c75c875f7f4be6b5b8da22fefe71a5e205154202cc5974b440b25db7d8
+```
 
 ## What It Does
 
 - Windows 오른쪽 아래에 뜨는 작은 topmost 위젯
-- Electron 없이 Rust + Win32 API로 구현
 - 서버 기준 시각으로 전 세계 사용자의 휴식 타이밍 동기화
 - 프리셋 반응 broadcast: 휴식, 기지개, 물, 인사, 응원, 복귀
 - 상태와 최신 반응에 따라 바뀌는 픽셀 고양이
@@ -31,20 +56,6 @@ $env:BREAKTIME_SERVER="https://nomad-timer.hyeon.space/api"
 API 서버 코드는 클라이언트와 분리해서 운영하는 것을 권장합니다. 이 저장소의 기본 빌드는 클라이언트와 사이트만 빌드하고, 서버 타깃은 `api-server` feature로 분리되어 있습니다.
 
 ## Build
-
-## Download
-
-Windows executable:
-
-```text
-https://github.com/MovieHolic-Plex/nomad-timer/releases/download/v0.1.0/breaktime.exe
-```
-
-SHA-256:
-
-```text
-614e25c75c875f7f4be6b5b8da22fefe71a5e205154202cc5974b440b25db7d8
-```
 
 Windows 앱:
 
